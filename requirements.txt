@@ -1,0 +1,6 @@
+make
+black
+flake8
+dotenv
+loguru
+tqdm
