@@ -3,8 +3,7 @@
 #################################################################################
 
 PROJECT_NAME = serve-ml
-PYTHON_VERSION = 3.12
-PYTHON_INTERPRETER = python
+PYTHON_INTERPRETER = python3
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -38,18 +37,38 @@ format:
 	black --config pyproject.toml app
 
 
+.PHONY: dependencies
+dependencies:
+	@echo "Installing dependencies for the container..."
+	$(PYTHON_INTERPRETER) -m pip install -U pip
+	apt install -y python3-venv
+
+
 ## Set up python interpreter environment
 .PHONY: create_environment
 create_environment:
-	conda create --name $(PROJECT_NAME) python=$(PYTHON_VERSION) -y
-	@echo ">>> conda env created. Activate with:\nconda activate $(PROJECT_NAME)"
+	@if command -v $(PYTHON_INTERPRETER) > /dev/null; then \
+		if [ ! -d "venv" ]; then \
+			$(PYTHON_INTERPRETER) -m venv venv; \
+			echo "Virtual environment created."; \
+		else \
+			echo "Virtual environment already exists."; \
+		fi; \
+		source venv/bin/activate && $(MAKE) requirements; \
+	else \
+		echo "$(PYTHON_INTERPRETER) is not installed. Please install it first."; \
+	fi
 
 
 ## Activate python environment
 .PHONY: activate_environment
 activate_environment:
-	conda activate $(PROJECT_NAME)
-
+	@if [ -d "venv" ]; then \
+  		source venv/bin/activate; \
+		echo "Virtual environment activated."; \
+	else \
+		echo "Virtual environment does not exist. Please run 'make create_environment' first."; \
+	fi
 
 .PHONY: setup_hooks
 setup_hooks:
@@ -63,6 +82,13 @@ setup_hooks:
 
 .PHONY: env
 env: create_environment activate_environment requirements setup_hooks
+
+
+.PHONY: run
+run:
+	@echo "Running the application..."
+	cd app && \
+	$(PYTHON_INTERPRETER) -m uvicorn main:app --host 0.0.0.0 --port 8000
 
 #################################################################################
 # Self Documenting Commands                                                     #
