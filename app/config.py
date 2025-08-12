@@ -52,11 +52,30 @@ def _format_message(record):
 
 
 def _request_serialize(record):
-    log_object = {
-        "time": f"{record['time']:YYYY-MM-DD HH:mm:ss.SSS!UTC}",
-        **json.loads(record["message"].replace("'", '"')),
-    }
-    return json.dumps(log_object)
+    if type(record["message"]) is not str:
+        # If the message is not a string, we assume it's a dictionary
+        record["message"] = json.dumps(record["message"])
+
+    # Convert the message to a JSON object
+    # and replace single quotes with double quotes for valid JSON
+    if isinstance(record["message"], str):
+        record["message"] = record["message"].replace("'", '"')
+    if not record["message"].startswith("{"):
+        # If the message is not a JSON object, we assume it's a string
+        record["message"] = json.dumps({"message": record["message"]})
+
+    # Create a log object with the time and message
+    try:
+        record["message"] = json.loads(record["message"])
+    except json.JSONDecodeError:
+        # If the message is not a valid JSON, we log it as a string
+        record["message"] = {"message": record["message"]}
+
+    if not isinstance(record["message"], dict):
+        # If the message is not a dictionary, we convert it to a dictionary
+        record["message"] = {"message": record["message"]}
+
+    return _log_serialize(record)
 
 
 def _log_serialize(record):
