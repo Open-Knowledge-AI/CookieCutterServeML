@@ -16,3 +16,8 @@ repos:
         language: system
         entry: make format
         pass_filenames: false
+      - id: check-version
+        name: Ensure Python package version is bumped
+        language: system
+        entry: bash -c 'VERSION_EXCLUDE_PATTERNS="*.md,*.rst,docs/*" make check-version'
+        pass_filenames: false
