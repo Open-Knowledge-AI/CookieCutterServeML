@@ -78,6 +78,9 @@ setup_hooks:
 		pre-commit install; \
 		pre-commit autoupdate --repo https://github.com/pre-commit/pre-commit-hooks; \
 		pre-commit install --hook-type pre-push; \
+		pre-commit install --hook-type pre-commit; \
+		pre-commit install --install-hooks; \
+		echo "Pre-commit hooks set up successfully."; \
 	else \
 		echo "Not inside a Git repository. Skipping pre-commit setup."; \
 	fi
