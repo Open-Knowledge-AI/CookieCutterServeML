@@ -4,8 +4,6 @@
 
 PROJECT_NAME := serve-ml
 PYTHON_INTERPRETER := python3
-PACKAGE_FILE := pyproject.toml
-VERSION_EXCLUDE_PATTERNS ?= *.md
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -88,36 +86,6 @@ setup_hooks:
 
 .PHONY: env
 env: create_environment activate_environment requirements setup_hooks
-
-.PHONY: check-version
-check-version:
-	@bash -c '\
-       set -e; \
-       echo "📥 Fetching latest origin/main..."; \
-       git fetch origin main >/dev/null 2>&1 || { echo "❌ Failed to fetch origin/main"; exit 1; }; \
-       changed_files=$$(git diff --name-only origin/main...HEAD | grep -vE "$(shell echo $(VERSION_EXCLUDE_PATTERNS) | sed "s/ /|/g; s/\*/.*/g")" || true); \
-       echo "🔍 Checking for relevant changes..."; \
-       if [ -z "$$changed_files" ]; then \
-          echo "ℹ️  Only excluded files changed ($(VERSION_EXCLUDE_PATTERNS)), skipping version check."; \
-          exit 0; \
-       fi; \
-       echo "📄 Relevant changed files:"; \
-       echo "$$changed_files" | sed "s/^/   - /"; \
-       # Check if we are pushing to main \
-       if git merge-base --is-ancestor HEAD origin/main; then \
-          echo "🔍 Pushing to a branch that is an ancestor of origin/main. Checking for version bump..."; \
-          main_version=$$(git show origin/main:$(PACKAGE_FILE) | python3 -c '\''import sys, importlib.util; spec = importlib.util.find_spec("tomllib") or importlib.util.find_spec("tomli"); mod = importlib.import_module("tomllib" if spec.name=="tomllib" else "tomli"); data = mod.load(sys.stdin.buffer); print(data["project"]["version"])'\''); \
-          current_version=$$(python3 -c '\''import sys, importlib.util; spec = importlib.util.find_spec("tomllib") or importlib.util.find_spec("tomli"); mod = importlib.import_module("tomllib" if spec.name=="tomllib" else "tomli"); data = mod.load(open("$(PACKAGE_FILE)", "rb")); print(data["project"]["version"])'\''); \
-          if [ "$$main_version" = "$$current_version" ]; then \
-             echo "❌ Version has NOT changed! (still $$current_version)"; \
-             exit 1; \
-          else \
-             echo "✅ Version changed: $$main_version → $$current_version"; \
-          fi; \
-       else \
-          echo "ℹ️  Not pushing to main, skipping version check."; \
-       fi \
-	'
 
 
 .PHONY: run
