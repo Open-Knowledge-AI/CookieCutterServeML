@@ -106,19 +106,15 @@ check-version:
 			exit 0; \
 		fi; \
 		# Check if we are pushing to main \
-		if git merge-base --is-ancestor HEAD origin/main; then \
-			echo "🔍 Code changes detected without version bump — checking..."; \
-			main_version=$$(git show origin/main:$(PACKAGE_FILE) | python3 -c '\''import sys, importlib.util; spec = importlib.util.find_spec("tomllib") or importlib.util.find_spec("tomli"); mod = importlib.import_module("tomllib" if spec.name=="tomllib" else "tomli"); data = mod.load(sys.stdin.buffer); print(data["project"]["version"])'\''); \
-			current_version=$$(python3 -c '\''import sys, importlib.util; spec = importlib.util.find_spec("tomllib") or importlib.util.find_spec("tomli"); mod = importlib.import_module("tomllib" if spec.name=="tomllib" else "tomli"); data = mod.load(open("$(PACKAGE_FILE)", "rb")); print(data["project"]["version"])'\''); \
-			if [ "$$main_version" = "$$current_version" ]; then \
-				echo "❌ Version has NOT changed! (still $$current_version)"; \
-				exit 1; \
-			else \
-				echo "✅ Version changed: $$main_version → $$current_version"; \
-			fi; \
+		echo "🔍 Code changes detected without version bump — checking..."; \
+		main_version=$$(git show origin/main:$(PACKAGE_FILE) | python3 -c '\''import sys, importlib.util; spec = importlib.util.find_spec("tomllib") or importlib.util.find_spec("tomli"); mod = importlib.import_module("tomllib" if spec.name=="tomllib" else "tomli"); data = mod.load(sys.stdin.buffer); print(data["project"]["version"])'\''); \
+		current_version=$$(python3 -c '\''import sys, importlib.util; spec = importlib.util.find_spec("tomllib") or importlib.util.find_spec("tomli"); mod = importlib.import_module("tomllib" if spec.name=="tomllib" else "tomli"); data = mod.load(open("$(PACKAGE_FILE)", "rb")); print(data["project"]["version"])'\''); \
+		if [ "$$main_version" = "$$current_version" ]; then \
+			echo "❌ Version has NOT changed! (still $$current_version)"; \
+			exit 1; \
 		else \
-			echo "ℹ️  Not pushing to main, skipping version check."; \
-		fi \
+			echo "✅ Version changed: $$main_version → $$current_version"; \
+		fi; \
 	'
 
 
