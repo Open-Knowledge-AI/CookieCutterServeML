@@ -1,6 +1,6 @@
 [project]
 name = "serve-ml"
-version = "0.1.1"
+version = "0.1.2"
 description = "A template for serving ML models"
 authors = [
     { name = "Open-Knowledge-AI" }
