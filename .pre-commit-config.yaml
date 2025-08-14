@@ -21,3 +21,4 @@ repos:
         language: system
         entry: bash -c 'VERSION_EXCLUDE_PATTERNS="*.md,*.rst,docs/*" make check-version'
         pass_filenames: false
+        stages: [push]
