@@ -93,7 +93,9 @@ check-version:
 		echo "📥 Fetching latest origin/main..."; \
 		git fetch origin main >/dev/null 2>&1 || { echo "❌ Failed to fetch origin/main"; exit 1; }; \
 		changed_files=$$(git diff --name-only origin/main...HEAD | grep -vE "$(shell echo $(VERSION_EXCLUDE_PATTERNS) | sed "s/ /|/g; s/\*/.*/g")" || true); \
+		echo "🔍 Checking for changed files..."; \
 		if [ -z "$$changed_files" ]; then \
+			echo "$$changed_files"; \
 			echo "ℹ️  Only excluded files changed ($(VERSION_EXCLUDE_PATTERNS)), skipping version check."; \
 			exit 0; \
 		fi; \
