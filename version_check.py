@@ -10,13 +10,18 @@ from packaging.version import Version, InvalidVersion
 try:
     import tomllib  # Python 3.11+
 except ImportError:
-    import tomli as tomllib  # Python 3.6-3.10
+    # Fallback for Python < 3.11
+    import tomli as tomllib  # type: ignore[import]
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 console = Console()
+
+
+def print_info_panel(message: str, title: str = "ℹ️ Info", border_style: str = "blue"):
+    console.print(Panel(message, title=title, border_style=border_style, expand=False))
 
 
 def load_versioning_config(path: Path):
@@ -41,15 +46,16 @@ def update_pyproject_version(file_path: Path, new_version: str):
         with file_path.open("r", encoding="utf-8") as f:
             content = f.read()
         content_new = re.sub(
-            r'version\s*=\s*"[0-9A-Za-z\.\-]+"',
+            r'version\s*=\s*"[0-9A-Za-z.\-]+"',
             f'version = "{new_version}"',
             content
         )
         with file_path.open("w", encoding="utf-8") as f:
             f.write(content_new)
-        console.print(f"[bold green]Updated pyproject.toml to version {new_version}[/bold green]")
+
+        print_info_panel(f"Updated pyproject.toml to version {new_version}", "✅ Version Updated", "green")
     except Exception as e:
-        console.print(f"[bold red]Failed to update pyproject.toml: {e}[/bold red]")
+        print_info_panel(f"Failed to update pyproject.toml: {e}", "❌ Error", "red")
         sys.exit(1)
 
 
@@ -123,7 +129,7 @@ def suggest_semver_bump(current_version: str, commits: list[str]) -> str:
         return current_version
 
 
-def suggest_next_version(current_version: str, pre_release: str | None = None):
+def suggest_next_version(current_version: str | None, pre_release: str | None = None):
     try:
         ver = Version(current_version)
     except InvalidVersion:
@@ -188,10 +194,12 @@ def main():
     branch = get_current_branch()
     current_version = get_version_from_pyproject(Path("pyproject.toml"))
     if not current_version:
+        print_info_panel("Could not read current version.", "❌ Error", "red")
         sys.exit(1)
 
     main_version = get_main_version()
     if not main_version:
+        print_info_panel("Could not read main branch version.", "❌ Error", "red")
         sys.exit(1)
 
     # Determine pre-release type
@@ -205,7 +213,6 @@ def main():
         pre_release = None
 
     # Compute suggested version
-    # Handle pre-release branches
     if pre_release:
         if f"{pre_release}" not in current_version:
             suggested = suggest_next_version(main_version, pre_release)
@@ -231,25 +238,27 @@ def main():
                 )
             )
         else:
-            console.print(f"[green]✅ Pre-release version {current_version} looks good.[/green]")
+            print_info_panel(f"Pre-release version {current_version} looks good.", "✅ Pre-release OK", "green")
     else:
-        # Standard release branch check
         if current_version == main_version:
-            # Auto-suggest next patch version
             suggested = suggest_next_version(current_version)
             print_version_warning(branch, current_version, suggested)
 
-            response = input(f"Do you want to auto-bump to {suggested}? [y/N]: ")
+            response_panel = Panel(
+                f"Do you want to auto-bump to {suggested}? [y/N]: ",
+                title="❓ Auto-bump Confirmation",
+                border_style="cyan",
+            )
+            response = input(response_panel.renderable)  # show panel and get input
             if response.lower() == "y":
                 update_pyproject_version(Path("pyproject.toml"), suggested)
-                console.print(f"[green]✅ Version bumped to {suggested}[/green]")
-                # Optional: update changelog automatically
+                print_info_panel(f"Version bumped to {suggested}", "✅ Version Bumped", "green")
                 subprocess.run(["python", "changelog_generator.py", suggested], check=True)
             else:
-                console.print("[yellow]Version not changed.[/yellow]")
+                print_info_panel("Version not changed.", "⚠️ Version Not Changed", "yellow")
                 sys.exit(1)
         else:
-            console.print(f"[green]✅ Version bumped: {main_version} → {current_version}[/green]")
+            print_info_panel(f"Version bumped: {main_version} → {current_version}", "✅ Version OK", "green")
 
 
 if __name__ == "__main__":
