@@ -185,52 +185,70 @@ def print_auto_bump_panel(branch, old_version, new_version):
 
 
 def main():
-    config = load_versioning_config(Path("versioning.yaml"))
-    default_branch = config.get("default_branch", "main")
-    branch_mappings = config.get("pre_release_branches", {})
-
     branch = get_current_branch()
     current_version = get_version_from_pyproject(Path("pyproject.toml"))
     if not current_version:
         sys.exit(1)
 
-    main_version = get_main_version(default_branch)
+    main_version = get_main_version()
     if not main_version:
         sys.exit(1)
 
-    commits = get_commits_since_main(default_branch)
-    suggested_semver = suggest_semver_bump(main_version, commits)
+    # Determine pre-release type
+    if branch.startswith("feature/"):
+        pre_release = "alpha"
+    elif branch.startswith("beta/"):
+        pre_release = "beta"
+    elif branch.startswith("rc/"):
+        pre_release = "rc"
+    else:
+        pre_release = None
 
-    pre_release = get_pre_release_for_branch(branch, branch_mappings)
-
+    # Compute suggested version
+    # Handle pre-release branches
     if pre_release:
-        if pre_release not in current_version:
-            suggested = suggest_next_version(suggested_semver, pre_release)
+        if f"{pre_release}" not in current_version:
+            suggested = suggest_next_version(main_version, pre_release)
             print_version_warning(branch, current_version, suggested)
             update_pyproject_version(Path("pyproject.toml"), suggested)
-            try:
-                subprocess.run(["python", "changelog_generator.py", suggested], check=True)
-            except subprocess.CalledProcessError as e:
-                console.print(f"[bold red]Failed to update CHANGELOG.md: {e}[/bold red]")
-            print_auto_bump_panel(branch, current_version, suggested)
+
+            # Update changelog automatically for pre-release
+            subprocess.run(["python", "changelog_generator.py", suggested], check=True)
+
+            warning_table = Table(show_header=False, box=None)
+            warning_table.add_row("Branch:", branch)
+            warning_table.add_row("Old version:", current_version)
+            warning_table.add_row("New version:", suggested)
+            warning_table.add_row("", "This pre-release version was auto-bumped!")
+
+            console.print(
+                Panel(
+                    warning_table,
+                    title="🚨 PRE-RELEASE VERSION AUTO-BUMPED 🚨",
+                    border_style="bold yellow",
+                    style="bold black on yellow",
+                    expand=True,
+                )
+            )
         else:
             console.print(f"[green]✅ Pre-release version {current_version} looks good.[/green]")
     else:
+        # Standard release branch check
         if current_version == main_version:
-            suggested = suggested_semver
+            # Auto-suggest next patch version
+            suggested = suggest_next_version(current_version)
             print_version_warning(branch, current_version, suggested)
 
-            # Prompt user to auto-bump
-            response = input(f"Do you want to auto-bump to {suggested}? [y/N]: ").strip().lower()
-            if response == "y":
+            response = input(f"Do you want to auto-bump to {suggested}? [y/N]: ")
+            if response.lower() == "y":
                 update_pyproject_version(Path("pyproject.toml"), suggested)
+                console.print(f"[green]✅ Version bumped to {suggested}[/green]")
+                # Optional: update changelog automatically
                 subprocess.run(["python", "changelog_generator.py", suggested], check=True)
-                console.print(f"[bold green]Version bumped and CHANGELOG.md updated![/bold green]")
             else:
+                console.print("[yellow]Version not changed.[/yellow]")
                 sys.exit(1)
         else:
-            subprocess.run(["python", "changelog_generator.py", current_version], check=True)
-            console.print(f"[bold green]CHANGELOG.md updated for version {current_version}[/bold green]")
             console.print(f"[green]✅ Version bumped: {main_version} → {current_version}[/green]")
 
 
