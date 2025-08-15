@@ -4,3 +4,4 @@ flake8
 dotenv
 loguru
 tqdm
+rich
