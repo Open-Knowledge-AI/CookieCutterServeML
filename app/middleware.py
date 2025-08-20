@@ -1,9 +1,8 @@
 import time
-
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from config import logger
+from .config import logger
 
 SENSITIVE_FIELDS = {"password", "token", "secret"}
 
@@ -12,37 +11,31 @@ def filter_sensitive(data):
     return {k: ("***" if k in SENSITIVE_FIELDS else v) for k, v in data.items()}
 
 
-def summarize_upload_file(upload_file):
-    return {
-        "filename": upload_file.filename,
-        "size": upload_file.size,
-        "content_type": upload_file.content_type,
-    }
-
-
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
 
-        # Extract URL variables
         url_vars = dict(request.query_params)
+        form_data_summary = {}
 
-        # Extract form data if present
-        form_data = {}
-        if request.headers.get("content-type", "").startswith(
-            ("application/x-www-form-urlencoded", "multipart/form-data")
-        ):
-            form = await request.form()
-            form_data = filter_sensitive(dict(form))
+        # Only inspect form fields safely
+        content_type = request.headers.get("content-type", "")
+        if content_type.startswith("application/x-www-form-urlencoded"):
+            form_data_summary["form_data"] = (
+                "Present (application/x-www-form-urlencoded)"
+            )
+        elif content_type.startswith("multipart/form-data"):
+            form_data_summary["form_data"] = "Present (multipart/form-data)"
+        elif content_type.startswith("application/json"):
+            form_data_summary["form_data"] = "Present (application/json)"
+        else:
+            form_data_summary = {"form_data": "Not present or unsupported content type"}
 
-        # Process the request
         response = await call_next(request)
 
         process_time = round(time.time() - start_time, 4)
         content_length = response.headers.get("content-length")
 
-        # Structured log for requests
         logger.bind(type="request").info(
             {
                 "method": request.method,
@@ -52,10 +45,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 "client": request.client.host,
                 "content_length": content_length,
                 "url_vars": url_vars,
-                "form_data": {
-                    k: summarize_upload_file(v) if hasattr(v, "filename") else v
-                    for k, v in form_data.items()
-                },
+                "form_data": form_data_summary,
             }
         )
 
