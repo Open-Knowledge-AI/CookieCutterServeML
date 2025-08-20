@@ -91,8 +91,7 @@ env: create_environment activate_environment requirements setup_hooks
 .PHONY: run
 run:
 	@echo "Running the application..."
-	cd app && \
-	$(PYTHON_INTERPRETER) -m uvicorn main:app --host 0.0.0.0 --port 8000
+	uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 #################################################################################
 # Self Documenting Commands                                                     #
