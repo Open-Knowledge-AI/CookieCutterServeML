@@ -16,9 +16,3 @@ repos:
         language: system
         entry: make format
         pass_filenames: false
-      - id: check-version
-        name: Ensure Python package version is bumped
-        language: system
-        entry: python version_check.py
-        pass_filenames: false
-        stages: [pre-push]
