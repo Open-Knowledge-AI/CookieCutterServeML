@@ -5,3 +5,7 @@ dotenv
 loguru
 tqdm
 rich
+fastapi
+uvicorn
+pydantic
+python-multipart
