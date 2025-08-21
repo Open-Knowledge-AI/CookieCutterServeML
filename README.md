@@ -1,156 +1,166 @@
-# 🚀 CookieCutter MLServe (ONNX + FastAPI)
+# 🚀 Serve-ML – Cookiecutter Starter for Serving Machine Learning Models
 
-[![CCDS](https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter)](https://cookiecutter-data-science.drivendata.org/)
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB.svg?style=flat&logo=python&logoColor=white)](https://python.org/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=yellow)](https://pre-commit.com/)
-[![black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://black.readthedocs.io/en/stable/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
-[![ONNX](https://img.shields.io/badge/ONNX-1.16.0-005CED?logo=onnx)](https://onnx.ai/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![Pydantic](https://img.shields.io/badge/Pydantic-2.9.2-0984E3?logo=pydantic&logoColor=white)](https://docs.pydantic.dev/)
-
-This repository provides a **production-ready starter template** for deploying machine learning models using **[ONNX](https://onnx.ai/)** as the primary model format.
-It’s designed to help you get from a trained model to a running, API-served inference service **fast**, while keeping all the essentials for maintainability, observability, and scalability.
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/release/python-3110/)
+[![FastAPI](https://img.shields.io/badge/fastapi-0.100+-green.svg)](https://fastapi.tiangolo.com/)
+[![Docker Ready](https://img.shields.io/badge/docker-ready-blue)](https://www.docker.com/)
+[![Pre-commit Hooks](https://img.shields.io/badge/pre--commit-enabled-brightgreen)](https://pre-commit.com/)
+[![Code Style: Black](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/psf/black)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 ---
 
-## ✨ Features
+A **production-ready starter template** for ML enthusiasts who want to **serve machine learning models without worrying about backend setup**.
+This project is designed to **scale**, with best practices for logging, linting, code formatting, and containerization already built-in.
 
-- **ONNX Model Serving** — Load and serve models in the ONNX format for portable, high-performance inference.
-- **FastAPI** — High-speed, easy-to-use API server for inference requests.
-- **Pydantic** — Strict request/response validation for reliable data handling.
-- **Structured Logging** — Write meaningful, structured logs to files (request logs, system logs, errors).
-- **User Request Tracking** — Automatically log each API request for monitoring and auditing.
-- **Model Version Tracking** — Store and expose the deployed model version.
-- **Dataset Version Tracking** — Keep track of which dataset version was used to train the deployed model.
-- **Health Check Endpoint** — Quickly verify service readiness and liveness.
-- **Configurable Settings** — Use environment variables for flexible deployments.
-- **Docker-Ready** — Preconfigured `Dockerfile` for containerized deployment.
+Whether you’re just prototyping or preparing for production, this repo gives you a **plug-and-play FastAPI server** for your models.
 
 ---
 
 ## 📂 Project Structure
 
 ```
-.
-├── app/
-│   ├── main.py           # FastAPI entry point
-│   ├── config.py         # Configuration & environment variables
-│   ├── logger.py         # Logging setup
-│   ├── models/
-│   │   └── model.onnx    # Example ONNX model
-│   ├── schemas/          # Pydantic request/response schemas
-│   └── utils/            # Utility functions (e.g., version tracking)
-├── logs/
-│   ├── requests.log      # All incoming requests
-│   └── system.log        # System and error logs
-├── requirements.txt
-├── Dockerfile
-├── .env.example
-└── README.md
+open-knowledge-ai-cookiecutterserveml/
+├── Dockerfile                  # Container setup
+├── Makefile                    # Self-documented automation (lint, run, etc.)
+├── pyproject.toml              # Project metadata + dev tooling configs
+├── requirements.txt            # Python dependencies
+├── .pre-commit-config.yaml     # Pre-commit hooks for clean code
+└── app/
+    ├── __init__.py
+    ├── config.py               # Logging, environment, paths
+    ├── main.py                 # FastAPI application entry
+    └── middleware.py           # Custom request logging middleware
 ```
 
 ---
 
-## ⚡ Getting Started
+## ⚡ Features
 
-### 1️⃣ Install Dependencies
+- ✅ **FastAPI-based REST API** – lightweight, blazing-fast server
+- ✅ **Model endpoints ready** – `/predict` and `/predict-batch` out of the box
+- ✅ **Request logging** – structured logs with sensitive data filtering
+- ✅ **Health & version endpoints** – `/health`, `/version`
+- ✅ **Pre-commit hooks** – ensure clean code before pushing
+- ✅ **Dockerized workflow** – build & run anywhere
+- ✅ **Makefile automation** – simple commands for common tasks
+
+---
+
+## 🛠️ Getting Started
+
+### 1. Clone the Repository
+
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/your-org/open-knowledge-ai-cookiecutterserveml.git
+cd open-knowledge-ai-cookiecutterserveml
 ```
 
-### 2️⃣ Set Environment Variables
-Copy the example environment file:
+### 2. Setup with Make
+
 ```bash
-cp .env.example .env
+make env   # creates virtualenv, installs dependencies, sets up pre-commit hooks
+make run   # starts FastAPI server at http://0.0.0.0:8000
 ```
-Update `.env` with:
-- `MODEL_PATH` — Path to your ONNX model.
-- `MODEL_VERSION` — Version of your deployed model.
-- `DATASET_VERSION` — Version of the dataset used to train the model.
-- `LOG_DIR` — Directory where logs should be stored.
 
-### 3️⃣ Run the Server
+### 3. Run with Docker
+
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-The API will be available at:
-➡️ `http://localhost:8000`
-
----
-
-## 🛠 Example API Endpoints
-
-| Method | Endpoint         | Description                          |
-|--------|------------------|--------------------------------------|
-| GET    | `/health`        | Check if the service is running.     |
-| POST   | `/predict`       | Run inference on input data.         |
-| GET    | `/metadata`      | Retrieve model and dataset versions. |
-
-Example prediction request:
-```json
-POST /predict
-Content-Type: application/json
-
-{
-  "feature1": 0.45,
-  "feature2": 1.23,
-  "feature3": 3.14
-}
-```
-
-Example response:
-```json
-{
-  "prediction": "class_A",
-  "confidence": 0.92
-}
+docker build -t serve-ml .
+docker run -p 8000:8000 serve-ml
 ```
 
 ---
 
-## 📝 Logging
+## 🌐 API Endpoints
 
-This repository uses **structured logging** for better observability:
-- `logs/system.log` — Application startup, errors, and general info.
-- `logs/requests.log` — Each incoming request, including timestamp and parameters.
+| Endpoint         | Method | Description                           |
+| ---------------- | ------ | ------------------------------------- |
+| `/`              | GET    | Welcome message                       |
+| `/health`        | GET    | Health check (returns `{status: ok}`) |
+| `/version`       | GET    | Returns version from `pyproject.toml` |
+| `/predict`       | POST   | Predict on a single file              |
+| `/predict-batch` | POST   | Predict on multiple files             |
 
-Example system log:
-```
-2025-08-08 10:15:23 [INFO] Model loaded: model_v1.2.0.onnx
-```
+🔍 Example with `curl`:
 
-Example request log:
-```
-2025-08-08 10:16:05 [REQUEST] /predict - {"feature1":0.45,"feature2":1.23}
-```
-
----
-
-## 📦 Deployment
-
-### Using Docker
 ```bash
-docker build -t ml-deployment-starter .
-docker run -p 8000:8000 ml-deployment-starter
+curl -X POST "http://localhost:8000/predict" \
+  -F "model_name=my_model" \
+  -F "input_data=@sample_input.json"
 ```
 
 ---
 
-## 🛡 Best Practices Included
+## 🧑‍💻 Development
 
-✅ Versioned model & dataset metadata
-✅ Validated API contracts using Pydantic
-✅ Centralized configuration management
-✅ Separation of concerns in code structure
-✅ Logging for debugging and monitoring
+### Formatting & Linting
+
+```bash
+make format   # auto-format with black
+make lint     # check style with black + flake8
+```
+
+### Cleaning Build Files
+
+```bash
+make clean
+```
+
+### Pre-commit Hooks
+
+Pre-commit ensures consistent formatting & hygiene:
+
+```bash
+make setup_hooks
+```
+
+---
+
+## 📊 Logging
+
+* Request logs → `logs/requests.log`
+* System logs → `logs/system.log`
+
+All logs are:
+
+* Structured (JSON or formatted text)
+* Rotated & compressed automatically
+* Filtered (sensitive fields like `password`, `token` are masked)
+
+---
+
+## 📦 Requirements
+
+* Python **3.11+**
+* [FastAPI](https://fastapi.tiangolo.com/)
+* [Uvicorn](https://www.uvicorn.org/)
+* [Docker](https://www.docker.com/) (optional)
+
+---
+
+## 🚀 Roadmap
+
+* [ ] Model registry integration
+* [ ] ONNX/TensorFlow/PyTorch inference helpers
+* [ ] Authentication & API keys
+* [ ] Async batch processing
+* [ ] Deployment templates (Kubernetes, AWS, etc.)
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome 🎉!
+Fork, open an issue, or submit a PR. Please run:
+
+```bash
+make format lint
+```
+
+before committing.
 
 ---
 
 ## 📜 License
 
-[LICENSE](LICENSE)
-
----
-
-**💡 Tip:** This repo is a starting point — extend it with authentication, monitoring dashboards, or CI/CD integration for full production readiness.
+This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
