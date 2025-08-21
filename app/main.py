@@ -5,10 +5,11 @@ except ImportError:
 
 from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from fastapi import FastAPI, Form, UploadFile, File, Request
 
-from .middleware import RequestLoggingMiddleware
+from .api import health, predict, registry
+from .core import RequestLoggingMiddleware
 from .config import logger, ASSETS_DIR, PROJ_ROOT
 
 
@@ -19,27 +20,36 @@ async def lifespan(app: FastAPI):
     logger.info("🛑 FastAPI application shutting down...")
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title="ONNX AI Model Serving API",
+    version="1.0.0",
+    root_path="/api/v1",
+)
 app.add_middleware(RequestLoggingMiddleware)
 
+app.include_router(registry.router)
+app.include_router(predict.router)
+app.include_router(health.router)
 
+
+#########################################
+# Static file serving
+#########################################
 @app.get("/favicon.ico")
 async def favicon():
     return FileResponse(ASSETS_DIR / "ico" / "onnxai-icon.ico")
 
 
+##########################################
+# Basic API Endpoints
+##########################################
 @app.get("/")
 async def root():
     """
     Root endpoint that returns a welcome message.
     """
     return {"message": "Welcome to the ONNX AI Model Serving API!"}
-
-
-@app.get("/health")
-async def health_check():
-    logger.info("Health check endpoint called")
-    return {"status": "ok"}
 
 
 @app.get("/version")
@@ -51,26 +61,3 @@ async def version():
         pyproject = tomllib.load(f)
     version_str = pyproject.get("project", {}).get("version", "unknown")
     return {"version": version_str}
-
-
-@app.post("/predict")
-async def predict(
-    model_name: str = Form(...),
-    input_data: UploadFile = File(...),
-):
-    content = await input_data.read()
-    return {"model": model_name, "filename": input_data.filename, "size": len(content)}
-
-
-@app.post("/predict-batch")
-async def predict_batch(
-    model_name: str = Form(...),
-    input_files: list[UploadFile] = File(...),
-):
-    results = []
-    for input_file in input_files:
-        content = await input_file.read()
-        results.append(
-            {"model": model_name, "filename": input_file.filename, "size": len(content)}
-        )
-    return {"results": results}
