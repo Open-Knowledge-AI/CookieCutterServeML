@@ -37,7 +37,7 @@ lint:
 ## Format source code with black
 .PHONY: format
 format:
-	$(BLACK) --config pyproject.toml ./app/
+	black --config pyproject.toml ./app/
 
 .PHONY: dependencies
 dependencies:
