@@ -5,11 +5,11 @@ description = "A template for serving ML models"
 authors = [
     { name = "Open-Knowledge-AI" }
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 
 [tool.black]
 line-length = 88
-target-version = ['py312']
+target-version = ['py311']
 exclude = '''
 /(
     \.git

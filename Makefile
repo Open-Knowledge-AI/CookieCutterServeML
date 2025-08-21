@@ -28,13 +28,13 @@ clean:
 .PHONY: lint
 lint:
 	flake8 app
-	black --check --config pyproject.toml app
+	black --check --config pyproject.toml .
 
 
 ## Format source code with black
 .PHONY: format
 format:
-	black --config pyproject.toml app
+	black --config pyproject.toml ./app/
 
 
 .PHONY: dependencies
