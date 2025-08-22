@@ -4,11 +4,16 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 
-from app.inference import (
-    probability_to_class,
+from ..config import MODELS_DIR
+from .preprocess import (
     make_landscape,
     resize_longest_edge,
     pad_to_size,
+    make_channels_first,
+)
+
+from .postprocess import (
+    probability_to_class,
 )
 
 
@@ -30,7 +35,6 @@ def run_inference(model_path, input_data):
 
 
 def content_to_class(content, model_name):
-
     # Assuming the content is an image, we need to process it.
     # Here we would typically convert the content to an image format.
     # For demonstration, let's assume the content is a valid image file.
@@ -46,7 +50,12 @@ def content_to_class(content, model_name):
     image = resize_longest_edge(image, 224)  # Resize to longest edge of 224 pixels
     image = pad_to_size(image, (224, 224))  # Pad to 224x224 pixels
     image = image.astype(np.float32)
+    image = make_channels_first(image)  # Convert to channels-first format (C, H, W)
     image = np.expand_dims(image, axis=0)  # Add batch dimension
+
+    # normalise the image
+    image /= 255.0
+    image = (image - 0.5) / 0.5  # Normalize to [-1, 1]
 
     # Run inference
     model_path = MODELS_DIR / Path(model_name)
@@ -55,7 +64,7 @@ def content_to_class(content, model_name):
 
     output = run_inference(str(model_path), image)
     if output is None:
-        raise RuntimeError("Model inference failed, no output returned")
+        raise ValueError("Model inference failed, no output returned")
 
     # Convert probabilities to class labels
     class_label = probability_to_class(output)
@@ -64,8 +73,6 @@ def content_to_class(content, model_name):
 
 
 if __name__ == "__main__":
-    from app.config import MODELS_DIR
-
     path_to_model = MODELS_DIR / "v1" / "mobilenetv2" / "v1" / "model.onnx"
     input_data = np.random.rand(1, 3, 224, 224).astype(np.float32)  # Example input data
     output = run_inference(str(path_to_model), input_data)

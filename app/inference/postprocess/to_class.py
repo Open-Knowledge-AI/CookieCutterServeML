@@ -11,4 +11,4 @@ def probability_to_class(probabilities):
     Returns:
 
     """
-    return argmax(probabilities) if probabilities else None
+    return int(argmax(probabilities)) if probabilities is not None else -1
