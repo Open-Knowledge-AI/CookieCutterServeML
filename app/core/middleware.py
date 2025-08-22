@@ -68,7 +68,7 @@ class MultipartParser:
 
     @staticmethod
     def extract_form_data_from_parts(parts):
-        """Extract form field data from multipart parts - FIXED VERSION"""
+        """Extract form field data from multipart parts."""
         form_data = {}
 
         for part in parts:
@@ -95,8 +95,8 @@ class MultipartParser:
                 content = part.get("content", b"")
 
                 if filename:
-                    # It's a file upload
-                    form_data[field_name] = {
+                    # It's a file upload - always store as list
+                    file_info = {
                         "filename": filename,
                         "content_type": headers.get(
                             "Content-Type", "application/octet-stream"
@@ -104,6 +104,25 @@ class MultipartParser:
                         "size": len(content),
                         "type": "file",
                     }
+
+                    # If field already exists, append to the list
+                    if field_name in form_data:
+                        # If it's already a list, append to it
+                        if isinstance(form_data[field_name], list):
+                            form_data[field_name].append(file_info)
+                        # If it's a single file (from previous iteration), convert to list
+                        elif (
+                            isinstance(form_data[field_name], dict)
+                            and form_data[field_name].get("type") == "file"
+                        ):
+                            existing_file = form_data[field_name]
+                            form_data[field_name] = [existing_file, file_info]
+                        # If it's some other type, create a new list (shouldn't happen normally)
+                        else:
+                            form_data[field_name] = [file_info]
+                    else:
+                        # First file for this field - start with a list
+                        form_data[field_name] = [file_info]
                 else:
                     # It's a regular form field - decode content
                     try:
@@ -153,15 +172,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 # Format for logging - summarize files, show regular fields
                 formatted_data = {}
                 for field_name, value in form_data.items():
-                    if isinstance(value, dict) and value.get("type") == "file":
-                        formatted_data[field_name] = {
-                            "filename": value["filename"],
-                            "size": value["size"],
-                            "content_type": value["content_type"],
-                            "type": "file",
-                        }
-                    else:
-                        formatted_data[field_name] = value
+                    # Files are already lists, so no special handling needed
+                    formatted_data[field_name] = value
 
                 return filter_sensitive(formatted_data)
 
