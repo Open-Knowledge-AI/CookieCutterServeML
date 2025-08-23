@@ -1,4 +1,4 @@
-# 🚀 Serve-ML – Cookiecutter Starter for Serving Machine Learning Models
+# 🚀 Serve-ML – Starter Template for Serving Machine Learning Models
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/release/python-3110/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -66,11 +66,11 @@ src/
 
 ## 🛠️ Getting Started
 
-### 1. Clone the Repository
+### 1. Clone the Repository (or Fork)
 
 ```bash
-git clone https://github.com/your-org/open-knowledge-ai-cookiecutterserveml.git
-cd open-knowledge-ai-cookiecutterserveml
+git clone https://github.com/Open-Knowledge-AI/CookieCutterServeML/
+cd CookieCutterServeML
 ```
 
 ### 2. Setup with Make
@@ -92,12 +92,12 @@ docker run -p 8000:8000 serve-ml
 ## 🌐 API Endpoints
 
 | Endpoint                             | Method | Description                           |
-| ------------------------------------ | ------ | ------------------------------------- |
+|--------------------------------------| ------ | ------------------------------------- |
 | `/`                                  | GET    | Welcome message                       |
 | `/health`                            | GET    | Health check (returns `{status: ok}`) |
 | `/version`                           | GET    | App version from `pyproject.toml`     |
 | `/predict`                           | POST   | Predict on a single file              |
-| `/predict-batch`                     | POST   | Predict on multiple files             |
+| `/predict/batch`                     | POST   | Predict on multiple files             |
 | `/registry`                          | GET    | List all available models             |
 | `/registry/{dataset}/{arch}/{model}` | GET    | Get details for a specific model      |
 
@@ -156,14 +156,60 @@ Logs are:
 
 ---
 
+## Multi-Code Deployments
+This template is also a plug-and-play solution for deploying multiple models with different codebases to test for performance and accuracy.
+To use this feature, we make use of `git-tag-deploy`, a tool that allows you to deploy different git tags to different directories on the same server.
+
+### Setup `git-tag-deploy`
+
+1. Install `git-tag-deploy`:
+    ```bash
+    pip install git-tag-deploy
+   ```
+2. Create a configuration file `deployment.yaml` in the root of your project with the following structure:
+    ```yaml
+   deployments:
+   - name: v0.2.1
+     git_tag: v0.2.1
+   - name: v0.2.0
+     git_tag: v0.2.0
+   - name: v0.1.0
+     git_tag: v0.1.0
+   ```
+3. Simply run the following command to deploy all tags:
+    ```bash
+    git-tag-deploy
+   ```
+4. Access the deployment endpoints mapped using ports (example):
+    - http://localhost:8001 for v0.2.1
+    - http://localhost:8002 for v0.2.0
+    - http://localhost:8003 for v0.1.0
+    - http://localhost:5000/deployments for the deployment mapping
+> ⚠️ **Experimental**: This feature is experimental and may not be suitable for production use. Use at your own risk.
+
+> ⚠️ **Experimental**: git-tag-deploy is under active development and may have breaking changes in future releases.
+
+> ⚠️ **Experimental**: this feature does not support docker deployments yet.
+
 ## 🚀 Roadmap
 
+* [x] Basic project structure
+* [x] Makefile for common tasks
+* [x] Pre-commit hooks
+* [x] Structured logging with rotation
+* [x] Health & version endpoints
+* [x] Single & batch prediction endpoints
+* [x] Model registry endpoints
+* [x] Dockerfile
+* [x] Example model & inference logic
+* [x] Environment variable configuration
+* [x] Sensitive field filtering in logs
 * [x] FastAPI serving template
 * [x] Model registry (local filesystem)
-* [ ] ONNX / TensorFlow / PyTorch inference helpers
+* [ ] Multi-backend registry (S3, MLflow)
+* [ ] Make a cookiecutter template from this repo
 * [ ] Authentication & API keys
 * [ ] Async batch processing
-* [ ] Multi-backend registry (S3, MLflow)
 * [ ] Deployment templates (K8s, AWS, GCP)
 
 ---
@@ -174,7 +220,7 @@ Contributions are welcome 🎉
 Fork, open an issue, or submit a PR. Please run:
 
 ```bash
-make format lint
+make format
 ```
 
 before committing.
