@@ -1,0 +1,3 @@
+deployments:
+  - name: v0.2.1
+    git_tag: v0.2.1
